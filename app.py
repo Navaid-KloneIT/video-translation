@@ -188,12 +188,15 @@ if __name__ == "__main__":
         print(f"Created folder: {OUTPUT_FOLDER}")
 
     # 2. Your video paths
-    videos = ["videos/winter1.mp4", "videos/winter2.mp4", "videos/winter3.mp4"]
+    videos = ["videos/winter1.mp4", "videos/winter2.mp4", "videos/winter3.mp4", "videos/winter4.mp4", "videos/winter5.mp4", "videos/winter6.mp4"]
     
     captions = [
-        "Pumpkin seeds deliver rich daily nourishment",
-        "Their natural antioxidants help protect cells",
-        "A simple daily handful supports strength"
+        "Winter can challenge the body's balance. Eating pistachios daily adds valuable nutrients.",
+        "Their antioxidants begin supporting natural defenses. The body absorbs their benefits smoothly.",
+        "Immune cells stay active and ready. Healthy fats gently support circulation.",
+        "Vitamin E helps nourish skin in dry winter air. Protein and fiber provide steady energy.",
+        "B-vitamins help maintain a stable mood. Together, these nutrients support whole-body balance.",
+        "Just remember, a small handful is enough. Enjoy pistachios as a healthy winter habit."
     ]
 
     print("STARTING...")
