@@ -5,8 +5,15 @@ import PIL.Image
 from PIL import Image, ImageDraw, ImageFont
 import datetime
 import logging
-import asyncio
-import edge_tts
+import asyncio 
+import edge_tts 
+import warnings # <--- ADDED: To manage warnings
+
+# ============================================================
+#  SUPPRESS FFmpeg WARNINGS
+# ============================================================
+# This stops the "bytes wanted but 0 bytes read" spam in the console
+warnings.filterwarnings("ignore", category=UserWarning, module="moviepy")
 
 # ============================================================
 #  LOGGING SETUP
@@ -67,7 +74,8 @@ from bidi.algorithm import get_display
 # === CONFIGURATION ===
 TARGET_WIDTH = 1080
 TARGET_HEIGHT = 1920
-OUTPUT_FOLDER = "result" 
+OUTPUT_FOLDER = "result"
+TEMP_FOLDER = "temp"
 
 FONT_PATH = "content/THEBOLDFONT-FREEVERSION.ttf" 
 ARABIC_FONT_PATH = "content/NotoSansArabic-Bold.ttf"
@@ -82,19 +90,20 @@ LANGUAGES = {
 }
 
 # ============================================================
-#  UPDATED: TTS AUDIO (PYTHON NATIVE - MORE RELIABLE)
+#  TTS AUDIO
 # ============================================================
 async def _generate_audio_async(text, voice, output_file):
-    """Async function to communicate with Edge TTS"""
     communicate = edge_tts.Communicate(text, voice)
     await communicate.save(output_file)
 
 def generate_audio_male_only(text, voice_name, output_file):
+    if not os.path.exists(os.path.dirname(output_file)):
+        os.makedirs(os.path.dirname(output_file))
+
     if os.path.exists(output_file):
         os.remove(output_file)
     
     try:
-        # We run the async function inside this synchronous wrapper
         asyncio.run(_generate_audio_async(text, voice_name, output_file))
 
         if os.path.exists(output_file) and os.path.getsize(output_file) > 100:
@@ -103,7 +112,6 @@ def generate_audio_male_only(text, voice_name, output_file):
             logging.error("  [Error] Audio file was not created (unknown reason).")
             return False
     except Exception as e:
-        # This will now print the REAL error (e.g., Network, Voice Name)
         logging.error(f"  [Error] Failed to generate audio: {e}")
         return False
 
@@ -159,6 +167,15 @@ def create_cinematic_video(video_paths, audio_path, captions_list, output_path, 
         if os.path.exists(path):
             try:
                 clip = VideoFileClip(path)
+                
+                # --- FIX 1: Remove Audio Track (Prevents duration mismatch) ---
+                clip = clip.without_audio()
+                
+                # --- FIX 2: Aggressive trim (0.15s) to avoid bad frames at end ---
+                if clip.duration > 0.2:
+                    clip = clip.subclip(0, clip.duration - 0.15)
+                
+                # Resize logic
                 scale = max(TARGET_WIDTH / clip.w, TARGET_HEIGHT / clip.h)
                 clip = clip.resize(scale * 1.05)
                 clip = clip.crop(x_center=clip.w/2, y_center=clip.h/2, width=TARGET_WIDTH, height=TARGET_HEIGHT)
@@ -181,6 +198,8 @@ def create_cinematic_video(video_paths, audio_path, captions_list, output_path, 
         if audio.duration > final_bg.duration:
             loops = int(audio.duration / final_bg.duration) + 1
             final_bg = concatenate_videoclips([final_bg] * loops)
+        
+        # Ensure final cut aligns exactly with audio
         final_bg = final_bg.subclip(0, audio.duration).set_audio(audio)
     except Exception as e:
         logging.error(f"  [Error] Audio processing failed: {e}")
@@ -207,9 +226,10 @@ def create_cinematic_video(video_paths, audio_path, captions_list, output_path, 
     final_video = CompositeVideoClip([final_bg] + text_clips, size=(TARGET_WIDTH, TARGET_HEIGHT))
     
     with Timer(f"Render MoviePy ({lang_code})"):
+        # Added verbose=False to reduce terminal clutter
         final_video.write_videofile(
             output_path, codec="libx264", audio_codec="aac", fps=30, 
-            threads=4, preset="ultrafast", logger=None
+            threads=4, preset="ultrafast", logger=None, verbose=False
         )
     
     final_video.close()
@@ -226,6 +246,10 @@ if __name__ == "__main__":
     if not os.path.exists(OUTPUT_FOLDER):
         os.makedirs(OUTPUT_FOLDER)
         logging.info(f"Created folder: {OUTPUT_FOLDER}")
+
+    if not os.path.exists(TEMP_FOLDER):
+        os.makedirs(TEMP_FOLDER)
+        logging.info(f"Created folder: {TEMP_FOLDER}")
 
     videos = ["videos/winter1.mp4", "videos/winter2.mp4", "videos/winter3.mp4", "videos/winter4.mp4", "videos/winter5.mp4", "videos/winter6.mp4"]
     
@@ -261,21 +285,23 @@ if __name__ == "__main__":
                             trans_captions.append(cap)
                 
                 # --- STEP 2: AUDIO ---
-                audio_file = f"temp_{lang_code}.mp3"
+                audio_filename = f"temp_{lang_code}.mp3"
+                audio_file_path = os.path.join(TEMP_FOLDER, audio_filename)
+                
                 full_text = " ".join(trans_captions)
                 audio_success = False
                 
                 with Timer("Audio Generation (Edge-TTS)"):
-                    audio_success = generate_audio_male_only(full_text, voice_name, audio_file)
+                    audio_success = generate_audio_male_only(full_text, voice_name, audio_file_path)
 
                 # --- STEP 3: VIDEO ---
                 output_video_path = os.path.join(OUTPUT_FOLDER, f"Output_{lang_name}.mp4")
                 
                 if audio_success:
                     with Timer("Video Processing Setup & Render"):
-                        create_cinematic_video(videos, audio_file, trans_captions, output_video_path, lang_code)
+                        create_cinematic_video(videos, audio_file_path, trans_captions, output_video_path, lang_code)
                     
-                    if os.path.exists(audio_file): os.remove(audio_file)
+                    if os.path.exists(audio_file_path): os.remove(audio_file_path)
                     logging.info(f"  -> Saved to: {output_video_path}")
                 else:
                     logging.error("  [SKIP] Skipping video generation because audio failed.")
