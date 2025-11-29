@@ -4,3 +4,4 @@ moviepy==1.0.3
 deep-translator==1.11.4
 arabic-reshaper==3.0.0
 python-bidi==0.6.7
+edge-tts==7.2.3
