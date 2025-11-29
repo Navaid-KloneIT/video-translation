@@ -188,7 +188,7 @@ if __name__ == "__main__":
         print(f"Created folder: {OUTPUT_FOLDER}")
 
     # 2. Your video paths
-    videos = ["content/winter1.mp4", "content/winter2.mp4", "content/winter3.mp4"]
+    videos = ["videos/winter1.mp4", "videos/winter2.mp4", "videos/winter3.mp4"]
     
     captions = [
         "Pumpkin seeds deliver rich daily nourishment",
