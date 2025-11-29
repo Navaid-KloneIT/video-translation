@@ -24,15 +24,12 @@ BASE_TEMP_DIR = "temp"
 BASE_LOG_DIR = "logs"
 
 # --- ⚡ PERFORMANCE SETTINGS ⚡ ---
-# FALSE = Static images (Very Fast)
-# TRUE  = Zoom effects (Slow on CPU)
 ENABLE_ZOOM_EFFECTS = False 
 
 TARGET_WIDTH = 1080
 TARGET_HEIGHT = 1920
 
 # --- 🅰️ FONTS ---
-# Make sure these files exist in your 'content/' folder
 FONT_PATH = "content/THEBOLDFONT-FREEVERSION.ttf" 
 ARABIC_FONT_PATH = "content/NotoSansArabic-Bold.ttf"
 JAPANESE_FONT_PATH = "content/NotoSansJP-Bold.ttf" 
@@ -51,19 +48,13 @@ LANGUAGES = {
 #  DYNAMIC LOGGING SETUP
 # ============================================================
 def setup_dynamic_logging(project_name):
-    """
-    Sets up logging to save inside logs/{project_name}/
-    """
-    # 1. Determine folder
     log_folder = os.path.join(BASE_LOG_DIR, project_name)
     if not os.path.exists(log_folder):
         os.makedirs(log_folder)
     
-    # 2. Reset existing handlers (so we don't write to previous folders)
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
 
-    # 3. Create new log file
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     log_file = os.path.join(log_folder, f"log_{project_name}_{timestamp}.txt")
     
@@ -117,24 +108,17 @@ from bidi.algorithm import get_display
 #  HELPER: LOAD ASSETS
 # ============================================================
 def get_video_files(folder_path):
-    """Finds all .mp4 files in the folder and sorts them."""
-    # Search for .mp4 files
     search_path = os.path.join(folder_path, "*.mp4")
     files = sorted(glob.glob(search_path))
     return files
 
 def get_captions(folder_path):
-    """Reads captions.txt from the folder."""
     txt_path = os.path.join(folder_path, "captions.txt")
-    
     if not os.path.exists(txt_path):
         logging.error(f"❌ captions.txt not found in {folder_path}")
         return []
-    
     with open(txt_path, "r", encoding="utf-8") as f:
-        # Read lines and remove empty lines
         lines = [line.strip() for line in f.readlines() if line.strip()]
-    
     return lines
 
 # ============================================================
@@ -145,7 +129,6 @@ async def _generate_audio_async(text, voice, output_file):
     await communicate.save(output_file)
 
 def generate_audio_male_only(text, voice_name, output_file):
-    # Ensure folder exists
     if not os.path.exists(os.path.dirname(output_file)):
         os.makedirs(os.path.dirname(output_file))
 
@@ -154,7 +137,6 @@ def generate_audio_male_only(text, voice_name, output_file):
     
     try:
         asyncio.run(_generate_audio_async(text, voice_name, output_file))
-
         if os.path.exists(output_file) and os.path.getsize(output_file) > 100:
             return True
         else:
@@ -172,7 +154,6 @@ def create_pil_text_image(text, video_w, video_h, lang_code='en'):
     draw = ImageDraw.Draw(img)
     final_text = text
 
-    # Handle Arabic Reshaping
     if lang_code == 'ar':
         try:
             reshaped_text = arabic_reshaper.reshape(text)
@@ -180,15 +161,12 @@ def create_pil_text_image(text, video_w, video_h, lang_code='en'):
         except:
             pass
 
-    # --- FONT SELECTION LOGIC ---
-    font_to_use = FONT_PATH # Default Latin Font
-    
+    font_to_use = FONT_PATH 
     if lang_code == 'ar':
         font_to_use = ARABIC_FONT_PATH
     elif lang_code == 'ja':
         font_to_use = JAPANESE_FONT_PATH
 
-    # --- FONT SIZE LOGIC ---
     scale_factor = 0.13
     if lang_code == 'ar':
         scale_factor = 0.10
@@ -201,7 +179,6 @@ def create_pil_text_image(text, video_w, video_h, lang_code='en'):
         try:
             font = ImageFont.truetype(font_to_use, target_font_size)
         except:
-            logging.warning(f"Could not load font {font_to_use}, using default.")
             font = ImageFont.load_default()
     else:
         try:
@@ -215,11 +192,9 @@ def create_pil_text_image(text, video_w, video_h, lang_code='en'):
     x_pos = (video_w - text_w) // 2
     y_pos = (video_h - text_h) // 2
 
-    # Draw Outline
     for ox, oy in [(-4,-4), (-4,4), (4,-4), (4,4), (0,5), (0,-5), (5,0), (-5,0)]:
         draw.text((x_pos + ox, y_pos + oy), final_text, font=font, fill="black")
 
-    # Draw Text
     draw.text((x_pos, y_pos), final_text, font=font, fill="#FFD700")
     return np.array(img)
 
@@ -235,8 +210,6 @@ def create_cinematic_video(video_paths, audio_path, captions_list, output_path, 
             try:
                 clip = VideoFileClip(path)
                 clip = clip.without_audio()
-                
-                # Trim to prevent EOF errors
                 if clip.duration > 0.2:
                     clip = clip.subclip(0, clip.duration - 0.15)
                 
@@ -250,8 +223,6 @@ def create_cinematic_video(video_paths, audio_path, captions_list, output_path, 
                 processed_clips.append(clip)
             except Exception as e:
                 logging.error(f"  [Error] Could not load {path}: {e}")
-        else:
-            logging.warning(f"  [Warning] Video not found: {path}")
 
     if not processed_clips:
         logging.error("  [Error] No video clips loaded.")
@@ -295,16 +266,13 @@ def create_cinematic_video(video_paths, audio_path, captions_list, output_path, 
 
     final_video = CompositeVideoClip([final_bg] + text_clips, size=(TARGET_WIDTH, TARGET_HEIGHT))
     
-    # --------------------------------------------------------
-    # FIXED: REMOVED GPU CHECK TO PREVENT CRASH ON OLD DRIVERS
-    # --------------------------------------------------------
     with Timer(f"Render (CPU Mode) ({lang_code})"):
         final_video.write_videofile(
             output_path, 
             codec="libx264", 
             audio_codec="aac", 
             fps=30, 
-            preset="ultrafast", # 'ultrafast' for speed, 'medium' for smaller file size
+            preset="ultrafast", 
             threads=None,
             logger=None
         )
@@ -318,34 +286,26 @@ def create_cinematic_video(video_paths, audio_path, captions_list, output_path, 
 # ============================================================
 if __name__ == "__main__":
     
-    # 1. Check if 'videos' folder exists
     if not os.path.exists(BASE_VIDEO_DIR):
-        print(f"ERROR: '{BASE_VIDEO_DIR}' folder not found. Please create it and add subfolders.")
+        print(f"ERROR: '{BASE_VIDEO_DIR}' folder not found.")
         exit()
 
-    # 2. Get all subfolders (projects) in the 'videos' directory
     projects = [f for f in os.listdir(BASE_VIDEO_DIR) if os.path.isdir(os.path.join(BASE_VIDEO_DIR, f))]
     
     if not projects:
-        print(f"ERROR: No subfolders found in '{BASE_VIDEO_DIR}'. Please add folders like 'Summer', 'Winter'.")
+        print(f"ERROR: No subfolders found in '{BASE_VIDEO_DIR}'.")
         exit()
 
     print(f"Found {len(projects)} projects: {projects}")
 
-    # ==========================
-    # LOOP THROUGH PROJECTS
-    # ==========================
     for project_name in projects:
         
-        # 3. Setup dynamic paths
         project_video_dir = os.path.join(BASE_VIDEO_DIR, project_name)
         project_result_dir = os.path.join(BASE_RESULT_DIR, project_name)
         project_temp_dir = os.path.join(BASE_TEMP_DIR, project_name)
         
-        # 4. Setup Logging for this specific project
         setup_dynamic_logging(project_name)
 
-        # 5. Create directories
         if not os.path.exists(project_result_dir): os.makedirs(project_result_dir)
         if not os.path.exists(project_temp_dir): os.makedirs(project_temp_dir)
 
@@ -353,7 +313,6 @@ if __name__ == "__main__":
         logging.info(f">>> STARTING PROJECT: {project_name}")
         logging.info(f"==================================================")
 
-        # 6. Load Assets
         videos = get_video_files(project_video_dir)
         captions = get_captions(project_video_dir)
 
@@ -368,9 +327,6 @@ if __name__ == "__main__":
 
         with Timer(f"Total Time for Project: {project_name}"):
             
-            # ==========================
-            # LOOP THROUGH LANGUAGES
-            # ==========================
             for lang_name, (lang_code, voice_name) in LANGUAGES.items():
                 logging.info(f"--------------------------------------------------")
                 logging.info(f"Processing Language: {lang_name}")
@@ -389,8 +345,20 @@ if __name__ == "__main__":
                                 logging.warning(f"Translation failed for '{cap}': {e}")
                                 trans_captions.append(cap)
                     
+                    # --- STEP 1.5: SAVE CAPTIONS TO TXT ---
+                    try:
+                        captions_filename = f"Captions_{lang_name}.txt"
+                        captions_path = os.path.join(project_result_dir, captions_filename)
+                        
+                        with open(captions_path, "w", encoding="utf-8") as f:
+                            for line in trans_captions:
+                                f.write(line + "\n")
+                        
+                        logging.info(f"  -> 📝 Saved captions to: {captions_path}")
+                    except Exception as e:
+                        logging.error(f"  [Error] Failed to save captions file: {e}")
+
                     # --- STEP 2: AUDIO ---
-                    # Save audio to temp/{project_name}/temp_{lang}.mp3
                     audio_filename = f"temp_{lang_code}.mp3"
                     audio_file_path = os.path.join(project_temp_dir, audio_filename)
                     
@@ -401,14 +369,12 @@ if __name__ == "__main__":
                         audio_success = generate_audio_male_only(full_text, voice_name, audio_file_path)
 
                     # --- STEP 3: VIDEO ---
-                    # Save video to result/{project_name}/Output_{lang}.mp4
                     output_video_path = os.path.join(project_result_dir, f"Output_{lang_name}.mp4")
                     
                     if audio_success:
                         with Timer("Video Processing Setup & Render"):
                             create_cinematic_video(videos, audio_file_path, trans_captions, output_video_path, lang_code)
                         
-                        # Clean up specific audio
                         if os.path.exists(audio_file_path): os.remove(audio_file_path)
                         logging.info(f"  -> Saved to: {output_video_path}")
                     else:

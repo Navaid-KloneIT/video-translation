@@ -3,3 +3,5 @@ result
 videos
 logs
 temp
+*.mp4
+*.avi
