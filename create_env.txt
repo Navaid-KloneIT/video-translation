@@ -5,27 +5,7 @@ cd env
 .\Scripts\activate
 cd ..
 clear
+python translate_srt.py
 python app.py
 
-Use Ctrl + Shift + P to open the Command Palette, and select "Notebook: Select Notebook Kernel"
-Then choose the interpreter you're using at the terminal
 
-gcloud config set app/cloud_build_timeout 2000
-
-gcloud init
-gcloud app deploy
-gcloud app browse
-gcloud app logs tail -s default
-
-# Database Migration
-flask db init
-flask db revision --rev-id 430c1b34dfd2
-flask db stamp head
-flask db migrate
-flask db upgrade
-
-Remove-Item -Recurse -Force migrations
-flask db init
-flask db migrate -m "Initial migration"
-
-set PATH=%PATH%;C:\Program Files\ngrok

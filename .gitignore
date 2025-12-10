@@ -6,3 +6,5 @@ temp
 *.mp4
 *.avi
 multilingual_output
+translate_input
+translate_output
