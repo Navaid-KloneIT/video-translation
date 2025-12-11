@@ -25,7 +25,14 @@ TARGET_LANGUAGES = {
     "Vietnamese": "vi",
     "Hindi": "hi",
     "Urdu": "ur",
-    "Italian": "it"  # Added Italian
+    "Italian": "it",
+    "Polish": "pl",
+    "Dutch": "nl",
+    "Romanian": "ro",
+    "Greek": "el",
+    "Czech": "cs",
+    "Korean": "ko",
+    "Hausa": "ha"
 }
 
 def translate_srt():
