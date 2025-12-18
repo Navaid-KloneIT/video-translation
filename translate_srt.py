@@ -13,26 +13,26 @@ INPUT_PATH = os.path.join(INPUT_FOLDER, INPUT_FILENAME)
 
 # Mapping language names to ISO-639-1 codes
 TARGET_LANGUAGES = {
-    "Spanish": "es",
-    "French": "fr",
     "Arabic": "ar",
-    "Russian": "ru",
-    "Portuguese": "pt",
-    "Indonesian": "id",
-    "German": "de",
-    "Japanese": "ja",
-    "Turkish": "tr",
-    "Vietnamese": "vi",
-    "Hindi": "hi",
-    "Urdu": "ur",
-    "Italian": "it",
-    "Polish": "pl",
-    "Dutch": "nl",
-    "Romanian": "ro",
-    "Greek": "el",
     "Czech": "cs",
+    "Dutch": "nl",
+    "French": "fr",
+    "German": "de",
+    "Greek": "el",
+    "Hausa": "ha",
+    "Hindi": "hi",
+    "Indonesian": "id",
+    "Italian": "it",
+    "Japanese": "ja",
     "Korean": "ko",
-    "Hausa": "ha"
+    "Polish": "pl",
+    "Portuguese": "pt",
+    "Romanian": "ro",
+    "Russian": "ru",
+    "Spanish": "es",
+    "Turkish": "tr",
+    "Urdu": "ur",
+    "Vietnamese": "vi"
 }
 
 def translate_srt():
