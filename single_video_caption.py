@@ -106,26 +106,26 @@ def create_cinematic_video(video_paths, captions_list, output_path):
     text_clips = []
     total_duration = final_bg.duration
 
-    if len(captions_list) > 0:
-        duration_per_segment = total_duration / len(captions_list)
+    # if len(captions_list) > 0:
+    #     duration_per_segment = total_duration / len(captions_list)
 
-        for i, sentence in enumerate(captions_list):
-            words = sentence.split()
-            if not words: continue
+    #     for i, sentence in enumerate(captions_list):
+    #         words = sentence.split()
+    #         if not words: continue
 
-            start_time_segment = i * duration_per_segment
-            duration_per_word = duration_per_segment / len(words)
+    #         start_time_segment = i * duration_per_segment
+    #         duration_per_word = duration_per_segment / len(words)
 
-            for j, word in enumerate(words):
-                img_arr = create_pil_text_image(word.upper(), TARGET_WIDTH, TARGET_HEIGHT)
-                word_start_time = start_time_segment + (j * duration_per_word)
+    #         for j, word in enumerate(words):
+    #             img_arr = create_pil_text_image(word.upper(), TARGET_WIDTH, TARGET_HEIGHT)
+    #             word_start_time = start_time_segment + (j * duration_per_word)
 
-                txt = (ImageClip(img_arr)
-                       .set_start(word_start_time)
-                       .set_duration(duration_per_word)
-                       .set_position('center'))
+    #             txt = (ImageClip(img_arr)
+    #                    .set_start(word_start_time)
+    #                    .set_duration(duration_per_word)
+    #                    .set_position('center'))
 
-                text_clips.append(txt)
+    #             text_clips.append(txt)
 
     # === STEP 3: Watermark ===
     watermark_arr = create_watermark_image("Booen Food", TARGET_WIDTH, TARGET_HEIGHT)
