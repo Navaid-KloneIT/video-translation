@@ -128,7 +128,7 @@ def create_cinematic_video(video_paths, captions_list, output_path):
                 text_clips.append(txt)
 
     # === STEP 3: Watermark ===
-    watermark_arr = create_watermark_image("Booen Food", TARGET_WIDTH, TARGET_HEIGHT)
+    watermark_arr = create_watermark_image("Booen Food & Wellness", TARGET_WIDTH, TARGET_HEIGHT)
     watermark_clip = (ImageClip(watermark_arr)
                       .set_start(0)
                       .set_duration(total_duration)
